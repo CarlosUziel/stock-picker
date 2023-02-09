@@ -8,7 +8,7 @@ import pandas as pd
 import yfinance as yf
 
 
-def download_data(
+def download_yfinance_data(
     portfolio_filepath: Path, date_range: Tuple[datetime, datetime], save_path: Path
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Download stock data using Yahoo Finance API.
