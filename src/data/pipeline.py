@@ -37,7 +37,10 @@ def main(
     save_path.mkdir(exist_ok=True, parents=True)
 
     # 1. Download data
-    _, ticker_data = download_yfinance_data(portfolio_filepath, date_range, save_path)
+    tickers = [
+        line.split(" ")[0] for line in portfolio_filepath.read_text().split("\n")
+    ]
+    _, ticker_data = download_yfinance_data(tickers, date_range, save_path)
 
     # 2. Generate price statistics
     if ticker_data is not None:
