@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Iterable, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,13 +9,12 @@ import yfinance as yf
 
 
 def download_yfinance_data(
-    portfolio_filepath: Path, date_range: Tuple[datetime, datetime], save_path: Path
+    tickers: Iterable[str], date_range: Tuple[datetime, datetime], save_path: Path
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Download stock data using Yahoo Finance API.
 
     Args:
-        portfolio_filepath: Path to file representing a portfolio of stocks. Each line
-            in the file must be a valid stock ticker.
+        tickers: A list of stock tickers.
         date_range: Date range to download historical data for as a tuple of datatime
             objects.
         save_path: Directory to save downloaded data to.
@@ -25,7 +24,7 @@ def download_yfinance_data(
         A dataframe containing historical price data for the selected date range.
     """
     # 1. Read tickers
-    tickers_str = " ".join(portfolio_filepath.read_text().split("\n"))
+    tickers_str = " ".join(tickers)
 
     # 2. Create ticker objects
     tickers = yf.Tickers(tickers_str)
@@ -46,7 +45,7 @@ def download_yfinance_data(
         tickers_info.to_csv(save_path.joinpath("ticker_information.csv"))
         logging.info("Tickers information downloaded successfully!")
     else:
-        tickers_info = None
+        tickers_info = pd.DataFrame()
         logging.warn("Tickers information could not be downloaded. Continuing...")
 
     # 4. Download historical data
@@ -54,16 +53,16 @@ def download_yfinance_data(
     logging.info("Downloading historical data...")
 
     try:
-        ticker_data = yf.download(
+        tickers_data = yf.download(
             tickers_str, start=start, end=end, ignore_tz=True, keepna=True
         )
-        ticker_data.to_csv(save_path.joinpath("ticker_data.csv"))
+        tickers_data.to_csv(save_path.joinpath("ticker_data.csv"))
         logging.info("Historical data downloaded successfully!")
     except Exception as e:
-        ticker_data = None
+        tickers_data = pd.DataFrame()
         logging.warn(f"There was a problem downloading historical price data: {e}")
 
-    return tickers_info, ticker_data
+    return tickers_info, tickers_data
 
 
 def get_price_statistics(
@@ -80,13 +79,13 @@ def get_price_statistics(
     """
 
     # 0. Define aggregate functions
-    def abs_start_end_change(series: pd.Series) -> float:
+    def abs_change(series: pd.Series) -> float:
         series = series.dropna()
         return series.iloc[-1] - series.iloc[0]
 
-    def rel_start_end_change(series: pd.Series) -> float:
+    def rel_change(series: pd.Series) -> float:
         series = series.dropna()
-        return (abs_start_end_change(series) / series.iloc[0]) * 100
+        return (abs_change(series) / series.iloc[0]) * 100
 
     def max_fall(series: pd.Series) -> float:
         series = series.dropna()
@@ -116,13 +115,13 @@ def get_price_statistics(
             (
                 ticker_data["Adj Close"].describe(),
                 ticker_data["Adj Close"].agg(
-                    [abs_start_end_change, rel_start_end_change, max_fall, max_rise]
+                    [abs_change, rel_change, max_fall, max_rise]
                 ),
             )
         )
         .round(2)
         .transpose()
-        .sort_values(by="rel_start_end_change", ascending=False)
+        .sort_values(by="rel_change", ascending=False)
     )
 
     logging.info("Historical price statistics calculated successfully!")
