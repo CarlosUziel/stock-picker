@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple
@@ -30,27 +31,39 @@ def download_data(
     tickers = yf.Tickers(tickers_str)
 
     # 3. Extract ticker information
-    ticker_info = pd.concat(
-        [
-            pd.Series(ticker_obg.info).rename(ticker_name)
-            for ticker_name, ticker_obg in tickers.tickers.items()
-        ],
-        axis=1,
-    )
+    logging.info(f"Downloading information for tickers ({tickers_str})")
 
-    # 3.1. Save ticker information
-    ticker_info.to_csv(save_path.joinpath("ticker_information.csv"))
+    tickers_info = []
+    for ticker_name, ticker_obg in tickers.tickers.items():
+        try:
+            tickers_info.append(pd.Series(ticker_obg.info).rename(ticker_name))
+        except Exception as e:
+            logging.warn(f"Problem retrieving information for {ticker_name}: {e}")
+            continue
+
+    if len(tickers_info) != 0:
+        tickers_info = pd.concat(tickers_info, axis=1)
+        tickers_info.to_csv(save_path.joinpath("ticker_information.csv"))
+        logging.info("Tickers information downloaded successfully!")
+    else:
+        tickers_info = None
+        logging.warn("Tickers information could not be downloaded. Continuing...")
 
     # 4. Download historical data
     start, end = date_range
-    ticker_data = yf.download(
-        tickers_str, start=start, end=end, ignore_tz=True, keepna=True
-    )
+    logging.info("Downloading historical data...")
 
-    # 4.1. Save ticker data
-    ticker_data.to_csv(save_path.joinpath("ticker_data.csv"))
+    try:
+        ticker_data = yf.download(
+            tickers_str, start=start, end=end, ignore_tz=True, keepna=True
+        )
+        ticker_data.to_csv(save_path.joinpath("ticker_data.csv"))
+        logging.info("Historical data downloaded successfully!")
+    except Exception as e:
+        ticker_data = None
+        logging.warn(f"There was a problem downloading historical price data: {e}")
 
-    return ticker_info, ticker_data
+    return tickers_info, ticker_data
 
 
 def get_price_statistics(
@@ -68,12 +81,15 @@ def get_price_statistics(
 
     # 0. Define aggregate functions
     def abs_start_end_change(series: pd.Series) -> float:
+        series = series.dropna()
         return series.iloc[-1] - series.iloc[0]
 
     def rel_start_end_change(series: pd.Series) -> float:
+        series = series.dropna()
         return (abs_start_end_change(series) / series.iloc[0]) * 100
 
     def max_fall(series: pd.Series) -> float:
+        series = series.dropna()
         return np.min(
             [
                 (np.min(series.iloc[i:] - np.max(series.iloc[:i])))
@@ -83,6 +99,7 @@ def get_price_statistics(
         )
 
     def max_rise(series: pd.Series) -> float:
+        series = series.dropna()
         return np.max(
             [
                 (np.max(series.iloc[i:] - np.min(series.iloc[:i])))
@@ -92,11 +109,13 @@ def get_price_statistics(
         )
 
     # 1. Compute price statistics
+    logging.info("Calculating historical price statistics...")
+
     price_stats = (
         pd.concat(
             (
-                ticker_data.describe(),
-                ticker_data.agg(
+                ticker_data["Adj Close"].describe(),
+                ticker_data["Adj Close"].agg(
                     [abs_start_end_change, rel_start_end_change, max_fall, max_rise]
                 ),
             )
@@ -105,6 +124,8 @@ def get_price_statistics(
         .transpose()
         .sort_values(by="rel_start_end_change", ascending=False)
     )
+
+    logging.info("Historical price statistics calculated successfully!")
 
     # 1.1. Save to disk
     price_stats.to_csv(save_filepath)
