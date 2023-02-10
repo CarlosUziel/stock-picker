@@ -48,7 +48,7 @@ def main(
             ticker_data, save_path.joinpath("price_statistics.csv")
         )
     else:
-        logging.warn("No ticker data available.")
+        logging.warning("No ticker data available.")
 
 
 if __name__ == "__main__":
