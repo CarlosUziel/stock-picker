@@ -37,7 +37,7 @@ def download_yfinance_data(
         try:
             tickers_info.append(pd.Series(ticker_obg.info).rename(ticker_name))
         except Exception as e:
-            logging.warn(f"Problem retrieving information for {ticker_name}: {e}")
+            logging.warning(f"Problem retrieving information for {ticker_name}: {e}")
             continue
 
     if len(tickers_info) != 0:
@@ -46,7 +46,7 @@ def download_yfinance_data(
         logging.info("Tickers information downloaded successfully!")
     else:
         tickers_info = pd.DataFrame()
-        logging.warn("Tickers information could not be downloaded. Continuing...")
+        logging.warning("Tickers information could not be downloaded. Continuing...")
 
     # 4. Download historical data
     start, end = date_range
@@ -60,7 +60,7 @@ def download_yfinance_data(
         logging.info("Historical data downloaded successfully!")
     except Exception as e:
         tickers_data = pd.DataFrame()
-        logging.warn(f"There was a problem downloading historical price data: {e}")
+        logging.warning(f"There was a problem downloading historical price data: {e}")
 
     return tickers_info, tickers_data
 
