@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Tuple
 
 import typer
+from dateutil.relativedelta import relativedelta
 
 from data.utils import download_yfinance_data, get_price_statistics
 
@@ -22,7 +23,10 @@ def main(
         help="Path to file containing tickers in a portfolio, one per line.",
     ),
     date_range: Tuple[datetime, datetime] = typer.Argument(
-        (datetime(2000, 1, 1), datetime(2023, 1, 1)),
+        (
+            datetime.now() - relativedelta(years=10),
+            datetime.now() - relativedelta(months=6),
+        ),
         help="date_range: Date range to download historical data for as a tuple of datatime objects.",
     ),
     save_root_path: Path = typer.Argument(
