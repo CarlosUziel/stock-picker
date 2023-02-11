@@ -7,8 +7,14 @@ import plotly.express as px
 import streamlit as st
 from dateutil.relativedelta import relativedelta
 
-from data.plots import candlestick_daily, candlestick_yearly
-from data.utils import download_yfinance_data, get_price_statistics
+from data.plots import (
+    candlestick_daily_st_cached,
+    candlestick_yearly_st_cached,
+    violin_month_day_st_cached,
+    violin_monthly_st_cached,
+    violin_weekday_st_cached,
+)
+from data.utils import download_yfinance_data_st_cached, get_price_statistics_st_cached
 
 # 0. Setup
 st.set_page_config(page_title="StockPicker", layout="wide")
@@ -54,11 +60,6 @@ date_range = st.sidebar.date_input(
 
 
 # 2. Download data
-@st.cache_data(show_spinner="Downloading financial data...")
-def cached_data_download(*args, **kwargs):
-    return download_yfinance_data(*args, **kwargs)
-
-
 tickers_info, tickers_data = (None, None)
 if tickers is not None:
     save_path = (
@@ -70,7 +71,7 @@ if tickers is not None:
     )
     save_path.mkdir(parents=True, exist_ok=True)
     try:
-        tickers_info, tickers_data = cached_data_download(
+        tickers_info, tickers_data = download_yfinance_data_st_cached(
             tickers, date_range, save_path
         )
         with st.expander("Download information"):
@@ -91,11 +92,6 @@ if tickers_info is not None:
 
 
 # 3. Compute price statistics
-@st.cache_data(show_spinner="Computing price statistics on historical data...")
-def cached_get_price_statistics(*args, **kwargs):
-    return get_price_statistics(*args, **kwargs)
-
-
 if tickers_data is not None:
     st.subheader("Price statistics on historical data")
     price_stats = None
@@ -109,7 +105,7 @@ if tickers_data is not None:
     )
     col0, col1 = st.columns(2)
     try:
-        price_stats = cached_get_price_statistics(tickers_data, save_filepath)
+        price_stats = get_price_statistics_st_cached(tickers_data, save_filepath)
         col0.markdown(
             """
         The following metrics are shown across the observed date range:
@@ -131,7 +127,6 @@ if tickers_data is not None:
 
 # 4. Visualizations
 if tickers_data is not None:
-    # TODO: cache plotting functions
     st.markdown("---")
     st.header("Data Visualization")
     st.markdown(
@@ -179,17 +174,43 @@ if tickers_data is not None:
     )
     col0, col1 = st.columns(2)
     ticker_selected_1 = col0.selectbox(
-        "Select first ticker for comparison: ", tickers, index=0
+        "Select first ticker for comparison: ", tickers, index=0, key="candlestick_1"
     )
     ticker_selected_2 = col1.selectbox(
-        "Select second ticker for comparison: ", tickers, index=1
+        "Select second ticker for comparison: ", tickers, index=1, key="candlestick_2"
     )
 
-    col0.plotly_chart(candlestick_daily(tickers_data, ticker_selected_1))
-    col1.plotly_chart(candlestick_daily(tickers_data, ticker_selected_2))
+    col0.plotly_chart(candlestick_daily_st_cached(tickers_data, ticker_selected_1))
+    col1.plotly_chart(candlestick_daily_st_cached(tickers_data, ticker_selected_2))
+    col0.plotly_chart(candlestick_yearly_st_cached(tickers_data, ticker_selected_1))
+    col1.plotly_chart(candlestick_yearly_st_cached(tickers_data, ticker_selected_2))
 
-    # 4.4. Price per weekday, month and year
-    col0.plotly_chart(candlestick_yearly(tickers_data, ticker_selected_1))
-    col1.plotly_chart(candlestick_yearly(tickers_data, ticker_selected_2))
-    
-    # TODO: add the monthly and weekday candlestick charts
+    # 4.4. Price seasonality
+    st.subheader("Seasonality")
+    st.markdown(
+        """
+    [Seasonality](https://www.investopedia.com/terms/s/seasonality.asp) is a 
+    characteristic of a time series in which the data experiences regular and 
+    predictable changes that recur every calendar year. Any predictable fluctuation 
+    or pattern that recurs or repeats over a one-year period is said to be seasonal.
+    """
+    )
+    col0, col1 = st.columns(2)
+    ticker_selected_1 = col0.selectbox(
+        "Select first ticker for comparison: ", tickers, index=0, key="sesonality_1"
+    )
+    ticker_selected_2 = col1.selectbox(
+        "Select second ticker for comparison: ", tickers, index=1, key="sesonality_2"
+    )
+
+    # monthly
+    col0.plotly_chart(violin_monthly_st_cached(tickers_data, ticker_selected_1))
+    col1.plotly_chart(violin_monthly_st_cached(tickers_data, ticker_selected_2))
+
+    # day of the month
+    col0.plotly_chart(violin_month_day_st_cached(tickers_data, ticker_selected_1))
+    col1.plotly_chart(violin_month_day_st_cached(tickers_data, ticker_selected_2))
+
+    # day of the week
+    col0.plotly_chart(violin_weekday_st_cached(tickers_data, ticker_selected_1))
+    col1.plotly_chart(violin_weekday_st_cached(tickers_data, ticker_selected_2))
