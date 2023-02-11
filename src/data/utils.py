@@ -1,15 +1,18 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import streamlit as st
 import yfinance as yf
 
 
 def download_yfinance_data(
-    tickers: Iterable[str], date_range: Tuple[datetime, datetime], save_path: Path
+    tickers: Iterable[str],
+    date_range: Tuple[datetime, datetime],
+    save_path: Optional[Path] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Download stock data using Yahoo Finance API.
 
@@ -42,7 +45,10 @@ def download_yfinance_data(
 
     if len(tickers_info) != 0:
         tickers_info = pd.concat(tickers_info, axis=1)
-        tickers_info.to_csv(save_path.joinpath("ticker_information.csv"))
+
+        if save_path is not None:
+            tickers_info.to_csv(save_path.joinpath("ticker_information.csv"))
+
         logging.info("Tickers information downloaded successfully!")
     else:
         tickers_info = pd.DataFrame()
@@ -56,7 +62,12 @@ def download_yfinance_data(
         tickers_data = yf.download(
             tickers_str, start=start, end=end, ignore_tz=True, keepna=True
         )
-        tickers_data.to_csv(save_path.joinpath("ticker_data.csv"))
+        tickers_data.index = pd.to_datetime(tickers_data.index, format="YYYY-MM-DD")
+        tickers_data = tickers_data.asfreq("D")
+
+        if save_path is not None:
+            tickers_data.to_csv(save_path.joinpath("ticker_data.csv"))
+
         logging.info("Historical data downloaded successfully!")
     except Exception as e:
         tickers_data = pd.DataFrame()
@@ -65,8 +76,13 @@ def download_yfinance_data(
     return tickers_info, tickers_data
 
 
+@st.cache_data(show_spinner="Downloading financial data...")
+def download_yfinance_data_st_cached(*args, **kwargs):
+    return download_yfinance_data(*args, **kwargs)
+
+
 def get_price_statistics(
-    ticker_data: pd.DataFrame, save_filepath: Path
+    ticker_data: pd.DataFrame, save_filepath: Optional[Path] = None
 ) -> pd.DataFrame:
     """Calculate price statistics based on historic data.
 
@@ -127,6 +143,12 @@ def get_price_statistics(
     logging.info("Historical price statistics calculated successfully!")
 
     # 1.1. Save to disk
-    price_stats.to_csv(save_filepath)
+    if save_filepath is not None:
+        price_stats.to_csv(save_filepath)
 
     return price_stats
+
+
+@st.cache_data(show_spinner="Computing price statistics...")
+def get_price_statistics_st_cached(*args, **kwargs):
+    return get_price_statistics(*args, **kwargs)
