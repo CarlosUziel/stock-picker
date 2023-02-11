@@ -1,7 +1,9 @@
 from copy import deepcopy
 
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
+import streamlit as st
 
 
 def candlestick_daily(tickers_data: pd.DataFrame, ticker: str):
@@ -43,6 +45,11 @@ def candlestick_daily(tickers_data: pd.DataFrame, ticker: str):
     return fig
 
 
+@st.cache_data(show_spinner="Plotting daily candlestick chart...")
+def candlestick_daily_st_cached(*args, **kwargs):
+    return candlestick_daily(*args, **kwargs)
+
+
 def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str):
     """Produce a candlestick chart based on yearly price data.
 
@@ -65,9 +72,17 @@ def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str):
             [
                 pd.Series(
                     [
-                        ticker_data.loc[ticker_data.index.year == year, "Open"][0],
-                        ticker_data.loc[ticker_data.index.year == year, "Adj Close"][
-                            -1
+                        ticker_data.loc[
+                            ticker_data.loc[
+                                ticker_data.index.year == year
+                            ].first_valid_index(),
+                            "Open",
+                        ],
+                        ticker_data.loc[
+                            ticker_data.loc[
+                                ticker_data.index.year == year
+                            ].last_valid_index(),
+                            "Adj Close",
                         ],
                         ticker_data.loc[ticker_data.index.year == year, "Low"].min(),
                         ticker_data.loc[ticker_data.index.year == year, "High"].max(),
@@ -137,8 +152,13 @@ def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str):
     return fig
 
 
-def candlestick_monthly(tickers_data: pd.DataFrame, ticker: str):
-    """Produce a candlestick chart based on monthly price data.
+@st.cache_data(show_spinner="Plotting yearly candlestick chart...")
+def candlestick_yearly_st_cached(*args, **kwargs):
+    return candlestick_yearly(*args, **kwargs)
+
+
+def violin_monthly(tickers_data: pd.DataFrame, ticker: str):
+    """Produce a violin plot chart based on monthly price data to evaluate seasonality.
 
     Args:
         tickers_data: Tickers historical price data. Columns are a multi-index where
@@ -146,9 +166,89 @@ def candlestick_monthly(tickers_data: pd.DataFrame, ticker: str):
         ticker: For which ticker to generate the plot for.
 
     Returns:
-        Candlestick plotly figure.
+        Violin plotly figure.
     """
+    # 0. Setup
+    ticker_close = deepcopy(tickers_data["Adj Close"][[ticker]])
+    ticker_close["month"] = ticker_close.index.month
+    ticker_close.sort_values(by=["month"])
+
+    # 1. Produce figure
+    fig = px.violin(ticker_close, x="month", y=ticker, box=True, points="all")
+    fig.update_layout(
+        title=f"Monthly seasonality ({ticker})",
+        yaxis_title="Closing price (USD)",
+        xaxis_title="Month",
+    )
+
+    return fig
 
 
-def candlestick_weekday():
-    pass
+@st.cache_data(show_spinner="Plotting monthly seasonality...")
+def violin_monthly_st_cached(*args, **kwargs):
+    return violin_monthly(*args, **kwargs)
+
+
+def violin_month_day(tickers_data: pd.DataFrame, ticker: str):
+    """Produce a violin plot chart based on day of the month price data to evaluate
+        seasonality.
+
+    Args:
+        tickers_data: Tickers historical price data. Columns are a multi-index where
+            first level is the metric and the second level is the ticker.
+        ticker: For which ticker to generate the plot for.
+
+    Returns:
+        Violin plotly figure.
+    """
+    # 0. Setup
+    ticker_close = deepcopy(tickers_data["Adj Close"][[ticker]])
+    ticker_close["day"] = ticker_close.index.day
+    ticker_close.sort_values(by=["day"])
+
+    # 1. Produce figure
+    fig = px.violin(ticker_close, x="day", y=ticker, box=True, points="all")
+    fig.update_layout(
+        title=f"Day of the month seasonality ({ticker})",
+        yaxis_title="Closing price (USD)",
+        xaxis_title="Day",
+    )
+
+    return fig
+
+
+@st.cache_data(show_spinner="Plotting day of the month seasonality...")
+def violin_month_day_st_cached(*args, **kwargs):
+    return violin_month_day(*args, **kwargs)
+
+
+def violin_weekday(tickers_data: pd.DataFrame, ticker: str):
+    """Produce a violin plot chart based on weekday price data to evaluate seasonality.
+
+    Args:
+        tickers_data: Tickers historical price data. Columns are a multi-index where
+            first level is the metric and the second level is the ticker.
+        ticker: For which ticker to generate the plot for.
+
+    Returns:
+        Violin plotly figure.
+    """
+    # 0. Setup
+    ticker_close = deepcopy(tickers_data["Adj Close"][[ticker]])
+    ticker_close["weekday"] = ticker_close.index.weekday
+    ticker_close.sort_values(by=["weekday"])
+
+    # 1. Produce figure
+    fig = px.violin(ticker_close, x="weekday", y=ticker, box=True, points="all")
+    fig.update_layout(
+        title=f"Day of the week seasonality ({ticker})",
+        yaxis_title="Closing price (USD)",
+        xaxis_title="Weekday",
+    )
+
+    return fig
+
+
+@st.cache_data(show_spinner="Plotting day of the week seasonality...")
+def violin_weekday_st_cached(*args, **kwargs):
+    return violin_weekday(*args, **kwargs)
