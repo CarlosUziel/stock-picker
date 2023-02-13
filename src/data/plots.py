@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
-def candlestick_daily(tickers_data: pd.DataFrame, ticker: str):
+def candlestick_daily(tickers_data: pd.DataFrame, ticker: str) -> go.Figure:
     """Produce a candlestick chart based on daily price data.
 
     Args:
@@ -23,7 +23,7 @@ def candlestick_daily(tickers_data: pd.DataFrame, ticker: str):
     ticker_data = tickers_data[ticker]
 
     # 1. Create figure
-    fig = go.Figure(
+    return go.Figure(
         data=[
             go.Candlestick(
                 x=tickers_data.index,
@@ -33,24 +33,20 @@ def candlestick_daily(tickers_data: pd.DataFrame, ticker: str):
                 high=ticker_data["High"],
             )
         ]
-    )
-    # 2. Adjust figure's layout
-    fig.update_layout(
+    ).update_layout(
         title=f"Candlestick daily chart ({ticker})",
         yaxis_title="Price (USD)",
         xaxis_title="Date",
         xaxis_rangeslider_visible=False,
     )
 
-    return fig
-
 
 @st.cache_data(show_spinner="Plotting daily candlestick chart...")
-def candlestick_daily_st_cached(*args, **kwargs):
+def candlestick_daily_st_cached(*args, **kwargs) -> go.Figure:
     return candlestick_daily(*args, **kwargs)
 
 
-def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str):
+def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str) -> go.Figure:
     """Produce a candlestick chart based on yearly price data.
 
     Args:
@@ -132,7 +128,7 @@ def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str):
     ]
 
     # 3. Create figure
-    fig = go.Figure(
+    return go.Figure(
         data=[
             go.Candlestick(
                 x=ticker_data_yearly.index,
@@ -142,9 +138,7 @@ def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str):
                 high=ticker_data_yearly["high"],
             )
         ]
-    )
-    # 4. Adjust figure's layout
-    fig.update_layout(
+    ).update_layout(
         title=f"Candlestick yearly chart ({ticker})",
         yaxis_title="Price (USD)",
         xaxis_title="Year",
@@ -152,15 +146,13 @@ def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str):
         annotations=annotations,
     )
 
-    return fig
-
 
 @st.cache_data(show_spinner="Plotting yearly candlestick chart...")
-def candlestick_yearly_st_cached(*args, **kwargs):
+def candlestick_yearly_st_cached(*args, **kwargs) -> go.Figure:
     return candlestick_yearly(*args, **kwargs)
 
 
-def violin_monthly(tickers_data: pd.DataFrame, ticker: str):
+def violin_monthly(tickers_data: pd.DataFrame, ticker: str) -> go.Figure:
     """Produce a violin plot chart based on monthly price data to evaluate seasonality.
 
     Args:
@@ -177,22 +169,21 @@ def violin_monthly(tickers_data: pd.DataFrame, ticker: str):
     ticker_close.sort_values(by=["month"])
 
     # 1. Produce figure
-    fig = px.violin(ticker_close, x="month", y=ticker, box=True, points="all")
-    fig.update_layout(
+    return px.violin(
+        ticker_close, x="month", y=ticker, box=True, points="all"
+    ).update_layout(
         title=f"Monthly seasonality ({ticker})",
         yaxis_title="Closing price (USD)",
         xaxis_title="Month",
     )
 
-    return fig
-
 
 @st.cache_data(show_spinner="Plotting monthly seasonality...")
-def violin_monthly_st_cached(*args, **kwargs):
+def violin_monthly_st_cached(*args, **kwargs) -> go.Figure:
     return violin_monthly(*args, **kwargs)
 
 
-def violin_month_day(tickers_data: pd.DataFrame, ticker: str):
+def violin_month_day(tickers_data: pd.DataFrame, ticker: str) -> go.Figure:
     """Produce a violin plot chart based on day of the month price data to evaluate
         seasonality.
 
@@ -210,22 +201,21 @@ def violin_month_day(tickers_data: pd.DataFrame, ticker: str):
     ticker_close.sort_values(by=["day"])
 
     # 1. Produce figure
-    fig = px.violin(ticker_close, x="day", y=ticker, box=True, points="all")
-    fig.update_layout(
+    return px.violin(
+        ticker_close, x="day", y=ticker, box=True, points="all"
+    ).update_layout(
         title=f"Day of the month seasonality ({ticker})",
         yaxis_title="Closing price (USD)",
         xaxis_title="Day",
     )
 
-    return fig
-
 
 @st.cache_data(show_spinner="Plotting day of the month seasonality...")
-def violin_month_day_st_cached(*args, **kwargs):
+def violin_month_day_st_cached(*args, **kwargs) -> go.Figure:
     return violin_month_day(*args, **kwargs)
 
 
-def violin_weekday(tickers_data: pd.DataFrame, ticker: str):
+def violin_weekday(tickers_data: pd.DataFrame, ticker: str) -> go.Figure:
     """Produce a violin plot chart based on weekday price data to evaluate seasonality.
 
     Args:
@@ -242,16 +232,15 @@ def violin_weekday(tickers_data: pd.DataFrame, ticker: str):
     ticker_close.sort_values(by=["weekday"])
 
     # 1. Produce figure
-    fig = px.violin(ticker_close, x="weekday", y=ticker, box=True, points="all")
-    fig.update_layout(
+    return px.violin(
+        ticker_close, x="weekday", y=ticker, box=True, points="all"
+    ).update_layout(
         title=f"Day of the week seasonality ({ticker})",
         yaxis_title="Closing price (USD)",
         xaxis_title="Weekday",
     )
 
-    return fig
-
 
 @st.cache_data(show_spinner="Plotting day of the week seasonality...")
-def violin_weekday_st_cached(*args, **kwargs):
+def violin_weekday_st_cached(*args, **kwargs) -> go.Figure:
     return violin_weekday(*args, **kwargs)
