@@ -1,6 +1,5 @@
 from datetime import datetime
 from io import StringIO
-from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
@@ -52,33 +51,25 @@ else:
 st.sidebar.markdown("---")
 date_range = st.sidebar.date_input(
     "Select the date range that will be used for the analysis:",
-    (
+    value=(
         datetime.now() - relativedelta(years=10),
         datetime.now() - relativedelta(months=6),
     ),
+    max_value=datetime.now(),
+    min_value=datetime.now() - relativedelta(years=100),
 )
 
 
 # 2. Download data
 tickers_info, tickers_data = (None, None)
 if tickers is not None:
-    save_path = (
-        Path(__file__)
-        .resolve()
-        .parents[1]
-        .joinpath("data")
-        .joinpath("uploaded_portfolio")
-    )
-    save_path.mkdir(parents=True, exist_ok=True)
     try:
         tickers_info, tickers_data = download_yfinance_data_st_cached(
-            tickers, date_range, save_path
+            tickers, date_range
         )
         with st.expander("Download information"):
-            st.markdown(
-                f"Size of _tickers information_: `{tickers_info.shape}`. "
-                f"Size of _ticker data_: `{tickers_data.shape}`"
-            )
+            st.markdown(f"Size of _tickers information_: `{tickers_info.shape}`")
+            st.markdown(f"Size of _ticker data_: `{tickers_data.shape}`")
     except Exception as e:
         st.write(f"There was a problem downloading the data: {e}")
 
@@ -95,17 +86,9 @@ if tickers_info is not None:
 if tickers_data is not None:
     st.subheader("Price statistics on historical data")
     price_stats = None
-    save_filepath = (
-        Path(__file__)
-        .resolve()
-        .parents[1]
-        .joinpath("data")
-        .joinpath("uploaded_portfolio")
-        .joinpath("price_statistics.csv")
-    )
     col0, col1 = st.columns(2)
     try:
-        price_stats = get_price_statistics_st_cached(tickers_data, save_filepath)
+        price_stats = get_price_statistics_st_cached(tickers_data)
         col0.markdown(
             """
         The following metrics are shown across the observed date range:
