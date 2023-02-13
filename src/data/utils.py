@@ -63,7 +63,7 @@ def download_yfinance_data(
             tickers_str, start=start, end=end, ignore_tz=True, keepna=True
         )
         tickers_data.index = pd.to_datetime(tickers_data.index, format="YYYY-MM-DD")
-        tickers_data = tickers_data.asfreq("D")
+        tickers_data = tickers_data.asfreq("D").sort_index()
 
         if save_path is not None:
             tickers_data.to_csv(save_path.joinpath("ticker_data.csv"))
