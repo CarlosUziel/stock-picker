@@ -65,6 +65,9 @@ def candlestick_yearly(tickers_data: pd.DataFrame, ticker: str):
     tickers_data = deepcopy(tickers_data)
     tickers_data.columns = tickers_data.columns.reorder_levels(order=[1, 0])
     ticker_data = tickers_data[ticker]
+    ticker_data = ticker_data.loc[
+        ticker_data.first_valid_index() : ticker_data.last_valid_index(), :
+    ]
 
     # 1. Compute yearly metrics
     ticker_data_yearly = (
