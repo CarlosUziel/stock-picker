@@ -14,6 +14,8 @@ from data.plots import (
     violin_weekday_st_cached,
 )
 from data.utils import download_yfinance_data_st_cached, get_price_statistics_st_cached
+from models.plots import plot_data_split_st_cached
+from models.utils import preprocess_data_st_cached, split_time_data_st_cached
 
 # 0. Setup
 st.set_page_config(page_title="StockPicker", layout="wide")
@@ -35,6 +37,7 @@ uploaded_file = st.sidebar.file_uploader(
     "Upload your portfolio of tickers:", type="txt"
 )
 if uploaded_file is not None:
+    st.header("Data Download")
     tickers = [
         line.split(" ")[0]
         for line in StringIO(uploaded_file.getvalue().decode("utf-8"))
@@ -52,8 +55,8 @@ st.sidebar.markdown("---")
 date_range = st.sidebar.date_input(
     "Select the date range that will be used for the analysis:",
     value=(
-        datetime.now() - relativedelta(years=10),
-        datetime.now() - relativedelta(months=6),
+        datetime.now() - relativedelta(years=5),
+        datetime.now(),
     ),
     max_value=datetime.now(),
     min_value=datetime.now() - relativedelta(years=100),
@@ -79,7 +82,7 @@ if tickers_info is not None:
     if tickers_info.empty:
         st.write("There is no information available for these tickers.")
     else:
-        st.dataframe(tickers_info)
+        st.dataframe(tickers_info.dropna(how="all").transpose())
 
 
 # 3. Compute price statistics
@@ -163,10 +166,22 @@ if tickers_data is not None:
         "Select second ticker for comparison: ", tickers, index=1, key="candlestick_2"
     )
 
-    col0.plotly_chart(candlestick_daily_st_cached(tickers_data, ticker_selected_1))
-    col1.plotly_chart(candlestick_daily_st_cached(tickers_data, ticker_selected_2))
-    col0.plotly_chart(candlestick_yearly_st_cached(tickers_data, ticker_selected_1))
-    col1.plotly_chart(candlestick_yearly_st_cached(tickers_data, ticker_selected_2))
+    col0.plotly_chart(
+        candlestick_daily_st_cached(tickers_data, ticker_selected_1),
+        use_container_width=True,
+    )
+    col1.plotly_chart(
+        candlestick_daily_st_cached(tickers_data, ticker_selected_2),
+        use_container_width=True,
+    )
+    col0.plotly_chart(
+        candlestick_yearly_st_cached(tickers_data, ticker_selected_1),
+        use_container_width=True,
+    )
+    col1.plotly_chart(
+        candlestick_yearly_st_cached(tickers_data, ticker_selected_2),
+        use_container_width=True,
+    )
 
     # 4.4. Price seasonality
     st.subheader("Seasonality")
@@ -187,13 +202,59 @@ if tickers_data is not None:
     )
 
     # monthly
-    col0.plotly_chart(violin_monthly_st_cached(tickers_data, ticker_selected_1))
-    col1.plotly_chart(violin_monthly_st_cached(tickers_data, ticker_selected_2))
+    col0.plotly_chart(
+        violin_monthly_st_cached(tickers_data, ticker_selected_1),
+        use_container_width=True,
+    )
+    col1.plotly_chart(
+        violin_monthly_st_cached(tickers_data, ticker_selected_2),
+        use_container_width=True,
+    )
 
     # day of the month
-    col0.plotly_chart(violin_month_day_st_cached(tickers_data, ticker_selected_1))
-    col1.plotly_chart(violin_month_day_st_cached(tickers_data, ticker_selected_2))
+    col0.plotly_chart(
+        violin_month_day_st_cached(tickers_data, ticker_selected_1),
+        use_container_width=True,
+    )
+    col1.plotly_chart(
+        violin_month_day_st_cached(tickers_data, ticker_selected_2),
+        use_container_width=True,
+    )
 
     # day of the week
-    col0.plotly_chart(violin_weekday_st_cached(tickers_data, ticker_selected_1))
-    col1.plotly_chart(violin_weekday_st_cached(tickers_data, ticker_selected_2))
+    col0.plotly_chart(
+        violin_weekday_st_cached(tickers_data, ticker_selected_1),
+        use_container_width=True,
+    )
+    col1.plotly_chart(
+        violin_weekday_st_cached(tickers_data, ticker_selected_2),
+        use_container_width=True,
+    )
+
+# 5. Forecasting
+if tickers_data is not None:
+    st.markdown("---")
+    st.header("Forecasting")
+    st.markdown(
+        "Next, we will try to predict the future price of our tickers using machine "
+        "learning for forecasting."
+    )
+    ticker_selected = st.selectbox(
+        "Select ticker to forecast: ", tickers, index=0, key="forecast_1"
+    )
+
+    # 5.1. Get and plot train and test data
+    st.subheader("Split data into training and testing sets")
+    st.markdown("...")
+    train_data, test_data = split_time_data_st_cached(
+        preprocess_data_st_cached(
+            tickers_data.reorder_levels(order=[1, 0], axis=1)[ticker_selected]
+        )
+    )
+    st.plotly_chart(
+        plot_data_split_st_cached(train_data, test_data), use_container_width=True
+    )
+
+    # 5.2. Model selection and hyper-parameter tuning
+    st.subheader("Model selection and hyper-parameter tuning")
+    st.markdown("...")
