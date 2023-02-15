@@ -1,8 +1,10 @@
 from copy import deepcopy
-from typing import Iterable, Tuple, Union
+from datetime import datetime
+from typing import Iterable, Optional, Tuple, Union
 
 import pandas as pd
 import streamlit as st
+from dateutil.relativedelta import relativedelta
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from skforecast.model_selection import grid_search_forecaster
 from sklearn.ensemble import RandomForestRegressor
@@ -47,7 +49,9 @@ def preprocess_data_st_cached(*args, **kwargs) -> pd.DataFrame:
 
 
 def split_time_data(
-    ticker_data: pd.DataFrame, test_steps: int = 28
+    ticker_data: pd.DataFrame,
+    start_train_date: Optional[datetime] = None,
+    test_steps: int = 28,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Split time-series data into train and test sets. Train test data will always be
     older than test data.
@@ -55,14 +59,22 @@ def split_time_data(
     Args:
         tickers_data: Ticker historical price data. Columns are "Adj Close", "Close",
             "High", "Low" and "Open".
-        test_steps: Number of time points to be used for testing. This number of newest
-            data is used to build the test set.
+        start_train_date: Date from which training data is selected.
+        test_steps: Number of time points to be used for testing in days. This number of
+            newest data is used to build the test set.
 
     Returns:
         A dataframe with training data.
         A dataframe with testing data.
     """
-    return ticker_data.iloc[:-test_steps, :], ticker_data.iloc[-test_steps:, :]
+    return (
+        ticker_data.loc[
+            start_train_date : (
+                ticker_data.index.max() - relativedelta(days=test_steps)
+            )
+        ],
+        ticker_data.iloc[-test_steps:, :],
+    )
 
 
 @st.cache_data(show_spinner="Splitting data into train and test sets...")
