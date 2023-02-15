@@ -251,12 +251,14 @@ if tickers_data is not None:
     st.subheader("Split data into training and testing sets")
     st.markdown(
         "Data is split into training and testing sets for model fitting and evaluation, "
-        "respectively."
+        "respectively. Given the variability of the stock market, we will only be using"
+        " the last year of available data."
     )
     train_data, test_data = split_time_data_st_cached(
         preprocess_data_st_cached(
-            tickers_data.reorder_levels(order=[1, 0], axis=1)[ticker_selected]
-        )
+            tickers_data.reorder_levels(order=[1, 0], axis=1)[ticker_selected],
+        ),
+        start_train_date=tickers_data.index.max() - relativedelta(years=1),
     )
     st.plotly_chart(
         plot_data_split_st_cached(train_data, test_data), use_container_width=True
@@ -277,9 +279,9 @@ if tickers_data is not None:
     st.markdown("### Grid Search results")
     st.dataframe(results_grid)
 
-    st.markdown("### Prediction results")
+    st.subheader("Model Evaluation")
     st.plotly_chart(
-        plot_data_predictions_st_cached(train_data, test_data, pred),
+        plot_data_predictions_st_cached(test_data, pred),
         use_container_width=True,
     )
     st.markdown(f"Test mean squared error (MSE): {error_mse:.2f}")
