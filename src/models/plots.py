@@ -31,7 +31,7 @@ def plot_data_split(train_data: pd.DataFrame, test_data: pd.DataFrame) -> go.Fig
     ).update_layout(
         yaxis_title="Adj. Close price",
         xaxis_title="Date",
-        legend_title="Security ticker",
+        legend_title="Data",
     )
 
 
@@ -40,9 +40,7 @@ def plot_data_split_st_cached(*args, **kwargs) -> go.Figure:
     return plot_data_split(*args, **kwargs)
 
 
-def plot_data_predictions(
-    train_data: pd.DataFrame, test_data: pd.DataFrame, pred: pd.Series
-) -> go.Figure:
+def plot_data_predictions(test_data: pd.DataFrame, pred: pd.Series) -> go.Figure:
     """Plot training, testing and predicted data.
 
     Args:
@@ -55,12 +53,6 @@ def plot_data_predictions(
     """
     return go.Figure(
         [
-            go.Scatter(
-                name="Training",
-                x=train_data.index,
-                y=train_data["Adj Close"],
-                mode="lines",
-            ),
             go.Scatter(
                 name="Testing",
                 x=test_data.index,
@@ -77,7 +69,7 @@ def plot_data_predictions(
     ).update_layout(
         yaxis_title="Adj. Close price",
         xaxis_title="Date",
-        legend_title="Security ticker",
+        legend_title="Data",
     )
 
 
