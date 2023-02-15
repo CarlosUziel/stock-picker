@@ -14,8 +14,12 @@ from data.plots import (
     violin_weekday_st_cached,
 )
 from data.utils import download_yfinance_data_st_cached, get_price_statistics_st_cached
-from models.plots import plot_data_split_st_cached
-from models.utils import preprocess_data_st_cached, split_time_data_st_cached
+from models.plots import plot_data_predictions_st_cached, plot_data_split_st_cached
+from models.utils import (
+    fit_forecaster_st_cached,
+    preprocess_data_st_cached,
+    split_time_data_st_cached,
+)
 
 # 0. Setup
 st.set_page_config(page_title="StockPicker", layout="wide")
@@ -245,7 +249,10 @@ if tickers_data is not None:
 
     # 5.1. Get and plot train and test data
     st.subheader("Split data into training and testing sets")
-    st.markdown("...")
+    st.markdown(
+        "Data is split into training and testing sets for model fitting and evaluation, "
+        "respectively."
+    )
     train_data, test_data = split_time_data_st_cached(
         preprocess_data_st_cached(
             tickers_data.reorder_levels(order=[1, 0], axis=1)[ticker_selected]
@@ -257,4 +264,22 @@ if tickers_data is not None:
 
     # 5.2. Model selection and hyper-parameter tuning
     st.subheader("Model selection and hyper-parameter tuning")
-    st.markdown("...")
+    st.markdown(
+        "By default, a random forest autoregressor is trained to make predictions into"
+        " the future. Its hyper-parameters are tuned using a special case of Grid "
+        "Search with backtesting."
+    )
+
+    _, results_grid, pred, error_mse = fit_forecaster_st_cached(
+        train_data, test_data, exog_cols=["day", "month"]
+    )
+
+    st.markdown("### Grid Search results")
+    st.dataframe(results_grid)
+
+    st.markdown("### Prediction results")
+    st.plotly_chart(
+        plot_data_predictions_st_cached(train_data, test_data, pred),
+        use_container_width=True,
+    )
+    st.markdown(f"Test mean squared error (MSE): {error_mse:.2f}")
