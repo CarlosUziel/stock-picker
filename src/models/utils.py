@@ -5,9 +5,9 @@ from typing import Iterable, Optional, Tuple, Union
 import pandas as pd
 import streamlit as st
 from dateutil.relativedelta import relativedelta
+from lightgbm import LGBMRegressor
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from skforecast.model_selection import grid_search_forecaster
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
 
@@ -110,12 +110,12 @@ def fit_forecaster(
 
     # 1. Define forecaster model
     forecaster = ForecasterAutoreg(
-        regressor=RandomForestRegressor(random_state=random_seed),
+        regressor=LGBMRegressor(random_state=random_seed),
         lags=14,
     )
 
     # 2. Define hyper-parameter grids to configure
-    lags_grid = [1, 2, 3, 7]
+    lags_grid = [1, 2, 3, 7, 14, 28]
     param_grid = {"n_estimators": [50, 100, 200], "max_depth": [None, 3, 7, 11]}
 
     # 3. Tune hyper-parameters using grid search
