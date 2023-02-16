@@ -136,6 +136,7 @@ if tickers_data is not None:
 
     # 4.2. Relative price increases
     def rel_change(series: pd.Series):
+        """Relative price increases"""
         initial_value = series.dropna().iloc[0]
         return ((series - initial_value) / initial_value) * 100
 
