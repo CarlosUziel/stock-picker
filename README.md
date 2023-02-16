@@ -130,14 +130,17 @@ streamlit run app/main.py
 
 Go to the URL indicated by streamlit and start using the data app! Just upload your portfolio of tickers (a text file with one ticker ID per line). It includes all the same steps as in the notebook:
 
-**Data Download**
+##### **Data Download**
+
 <img src="images/web_app_main.png" alt="Web App" width="700" height="350">
 
-**Data Visualization**
+##### **Data Visualization**
+
 <img src="images/web_app_visualization.png" alt="Web App" width="700" height="350">
 <img src="images/web_app_visualization_2.png" alt="Web App" width="700" height="350">
 
-**Data Forecasting**
+##### **Data Forecasting**
+
 <img src="images/web_app_forecasting.png" alt="Web App" width="700" height="350">
 <img src="images/web_app_forecasting_2.png" alt="Web App" width="700" height="350">
 
