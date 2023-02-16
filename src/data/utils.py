@@ -82,12 +82,12 @@ def download_yfinance_data_st_cached(*args, **kwargs):
 
 
 def get_price_statistics(
-    ticker_data: pd.DataFrame, save_filepath: Optional[Path] = None
+    tickers_data: pd.DataFrame, save_filepath: Optional[Path] = None
 ) -> pd.DataFrame:
     """Calculate price statistics based on historic data.
 
     Args:
-        ticker_data: Price data for a set of tickers.
+        tickers_data: Price data for a set of tickers.
         save_filepath: Path to save price statistics to.
 
     Returns:
@@ -96,14 +96,17 @@ def get_price_statistics(
 
     # 0. Define aggregate functions
     def abs_change(series: pd.Series) -> float:
+        """Compute absolute change from first to last element in the series"""
         series = series.dropna()
         return series.iloc[-1] - series.iloc[0]
 
     def rel_change(series: pd.Series) -> float:
+        """Compute relative change from first to last element in the series"""
         series = series.dropna()
         return (abs_change(series) / series.iloc[0]) * 100
 
     def max_fall(series: pd.Series) -> float:
+        """Compute max fall from a previous all-time high"""
         series = series.dropna()
         return np.min(
             [
@@ -114,6 +117,7 @@ def get_price_statistics(
         )
 
     def max_rise(series: pd.Series) -> float:
+        """Compute max rise from a previous all-time low"""
         series = series.dropna()
         return np.max(
             [
@@ -129,8 +133,8 @@ def get_price_statistics(
     price_stats = (
         pd.concat(
             (
-                ticker_data["Adj Close"].describe(),
-                ticker_data["Adj Close"].agg(
+                tickers_data["Adj Close"].describe(),
+                tickers_data["Adj Close"].agg(
                     [abs_change, rel_change, max_fall, max_rise]
                 ),
             )
